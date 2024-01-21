@@ -1,7 +1,15 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from api.v1.serializers import FoodgramUserSerializer
 from users.models import FoodgramUser
+
+from api.v1.serializers import TagsSerializer, IngredientsSerializer, FoodgramUserSerializer, RecipesSerializer, TokenSerializer
+from recipes.models import Tags, Ingredients, Recipes
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -12,12 +20,15 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = FoodgramUserSerializer
 
 
-class TagsViewSet(viewsets.ModelViewSet):
-    pass
+class TagsViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Tags.objects.all()
+    serializer_class = TagsSerializer
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
-    pass
+    queryset = Recipes.objects.all()
+    serializer_class = RecipesSerializer
+    pagination_class = PageNumberPagination
 
 
 class ShoppingCartViewSet(viewsets.ModelViewSet):
@@ -33,4 +44,5 @@ class SubscriptionsViewSet(viewsets.ModelViewSet):
 
 
 class IngredientsViewSet(viewsets.ModelViewSet):
-    pass
+    queryset = Ingredients.objects.all()
+    serializer_class = IngredientsSerializer

@@ -20,7 +20,7 @@ class FoodgramUser(AbstractUser):
         verbose_name='Имя',
         max_length=settings.MAX_LENGTH_USERCHARFIELD,
     )
-    first_name = models.CharField(
+    last_name = models.CharField(
         verbose_name='Фамилия',
         max_length=settings.MAX_LENGTH_USERCHARFIELD,
     )
@@ -28,3 +28,17 @@ class FoodgramUser(AbstractUser):
         verbose_name='Пароль',
         max_length=settings.MAX_LENGTH_USERCHARFIELD,
     )
+
+
+class Subscriptions(models.Model):
+    subscriber = models.ForeignKey(
+        FoodgramUser,
+        related_name='subscriptions',
+        on_delete=models.CASCADE)
+    followed_user = models.ForeignKey(
+        FoodgramUser,
+        related_name='followers',
+        on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = 'Подписки'
