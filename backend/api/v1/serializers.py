@@ -8,9 +8,14 @@ from recipes.models import Tags, Ingredients, Recipes
 
 class FoodgramUserSerializer(serializers.ModelSerializer):
     """Сериализатор для работы с моделью user."""
+    password = serializers.CharField(
+        write_only=True
+    )
+
     class Meta:
         model = FoodgramUser
         fields = (
+            'id',
             'username',
             'email',
             'first_name',
@@ -52,10 +57,12 @@ class IngredientsSerializer(serializers.ModelSerializer):
 
 
 class RecipesSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(
-        slug_field='username',
-        read_only=True
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tags.objects.all(),
+        many=True,
     )
+    author = FoodgramUserSerializer(read_only=True)
+    cooking_time = serializers.IntegerField(min_value=1)
 
     class Meta:
         model = Recipes
@@ -69,3 +76,4 @@ class RecipesSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time',
         )
+        read_only_fields = ('author',)

@@ -10,10 +10,6 @@ class Ingredients(models.Model):
         max_length=settings.MAX_NAME_LENGTH,
         null=False,
     )
-    amount = models.IntegerField(
-        verbose_name='Количество',
-        null=False,
-    )
     measurement_unit = models.CharField(
         verbose_name='Размерность',
         max_length=settings.MAX_NAME_LENGTH,
@@ -68,12 +64,13 @@ class Recipes(models.Model):
     )
     tags = models.ManyToManyField(
         Tags,
-        through='TagsRecipes'
+        through='TagsRecipes',
+        related_name='recipes',
     )
-    ingredients = models.ForeignKey(
+    ingredients = models.ManyToManyField(
         Ingredients,
         related_name='recipes',
-        on_delete=models.CASCADE
+        through='IngredientsInRecipes',
     )
     author = models.ForeignKey(
         FoodgramUser,
@@ -99,6 +96,20 @@ class TagsRecipes(models.Model):
 
     def __str__(self):
         return f'{self.tags} {self.recipes}'
+
+
+class IngredientsInRecipes(models.Model):
+    ingredient = models.ForeignKey(
+        Ingredients,
+        related_name='ingredients_in_recipes',
+        on_delete=models.CASCADE
+    )
+    recipe = models.ForeignKey(
+        Recipes,
+        related_name='ingredients_in_recipes',
+        on_delete=models.CASCADE
+    )
+    amount = models.IntegerField()
 
 
 class ShoppingCart(models.Model):
