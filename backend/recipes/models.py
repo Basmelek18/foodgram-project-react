@@ -8,12 +8,10 @@ class Ingredients(models.Model):
     name = models.CharField(
         verbose_name='Название ингридиента',
         max_length=settings.MAX_NAME_LENGTH,
-        null=False,
     )
     measurement_unit = models.CharField(
         verbose_name='Размерность',
         max_length=settings.MAX_NAME_LENGTH,
-        null=False,
     )
 
     class Meta:
@@ -69,7 +67,6 @@ class Recipes(models.Model):
     )
     ingredients = models.ManyToManyField(
         Ingredients,
-        related_name='recipes',
         through='IngredientsInRecipes',
     )
     author = models.ForeignKey(
@@ -85,34 +82,48 @@ class Recipes(models.Model):
 
 
 class TagsRecipes(models.Model):
-    tags = models.ForeignKey(
+    tag = models.ForeignKey(
         Tags,
         related_name='tags_recipes',
         on_delete=models.CASCADE)
-    recipes = models.ForeignKey(
+    recipe = models.ForeignKey(
         Recipes,
         related_name='tags_recipes',
         on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.tags} {self.recipes}'
+        return f'{self.tag} {self.recipe}'
 
 
 class IngredientsInRecipes(models.Model):
     ingredient = models.ForeignKey(
         Ingredients,
-        related_name='ingredients_in_recipes',
+        on_delete=models.CASCADE,
+        related_name='ingredient_in_recipe'
+    )
+    recipe = models.ForeignKey(
+        Recipes,
+        on_delete=models.CASCADE,
+        related_name='ingredient_in_recipe'
+    )
+    amount = models.IntegerField()
+
+    class Meta:
+        verbose_name = 'ингредиенты в рецептах'
+
+
+class ShoppingCart(models.Model):
+    user = models.ForeignKey(
+        FoodgramUser,
+        related_name='shopping_cart',
         on_delete=models.CASCADE
     )
     recipe = models.ForeignKey(
         Recipes,
-        related_name='ingredients_in_recipes',
+        related_name='shopping_cart',
         on_delete=models.CASCADE
     )
-    amount = models.IntegerField()
 
-
-class ShoppingCart(models.Model):
     class Meta:
         verbose_name = 'Список покупок'
 
