@@ -1,4 +1,7 @@
+from django.db.models import Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from reportlab.pdfgen import canvas
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
@@ -33,7 +36,6 @@ class UserViewSet(viewsets.ModelViewSet):
         detail=False,
         url_path='me',
         permission_classes=(IsAuthenticated,),
-        pagination_class=PageNumberPagination
     )
     def get_current_user_info(self, request):
         serializer = CreateFoodgramUserSerializer(request.user)
@@ -47,9 +49,13 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def get_subscriptions(self, request):
         user = request.user
-        subscriptions = user.subscriptions.all()
+        subscriptions = self.paginate_queryset(
+            Subscriptions.objects.filter(
+                subscriber=user
+            )
+        )
         serializer = SubscribeSerializer(subscriptions, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return self.get_paginated_response(serializer.data)
 
     @action(
         methods=['POST', 'DELETE'],
@@ -129,6 +135,34 @@ class RecipesViewSet(viewsets.ModelViewSet):
             shopping_cart = get_object_or_404(ShoppingCart, user=request.user, recipe=recipe)
             shopping_cart.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        methods=['GET'],
+        detail=False,
+        url_path='download_shopping_cart',
+        permission_classes=(IsAuthenticated,)
+    )
+    def download_shopping_cart(self, request):
+        ingredients = IngredientsInRecipes.objects.filter(recipe__shopping_cart__user=request.user).values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(amount=Sum('amount'))
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="shopping_cart.pdf"'
+
+        pdf = canvas.Canvas(response)
+        pdf.drawString(100, 800, "Shopping Cart")
+
+        y_position = 780
+        for ingredient in ingredients:
+            ingredient_line = f"{ingredient['ingredient__name']}, {ingredient['ingredient__measurement_unit']}, {ingredient['amount']}"
+            pdf.drawString(100, y_position, ingredient_line)
+            y_position -= 20
+
+        pdf.showPage()
+        pdf.save()
+
+        return response
 
 
 class IngredientsViewSet(viewsets.ModelViewSet):

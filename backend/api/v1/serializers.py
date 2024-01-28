@@ -110,6 +110,12 @@ class SubscribeSerializer(serializers.ModelSerializer):
             'recipes',
             'recipes_count'
         )
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Subscriptions.objects.all(),
+                fields=['subscriber', 'followed_user']
+            )
+        ]
 
     def get_is_subscribed(self, obj):
         return Subscriptions.objects.filter(
