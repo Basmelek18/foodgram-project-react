@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 
 
@@ -15,6 +16,9 @@ class FoodgramUser(AbstractUser):
         verbose_name='Имя пользователя',
         unique=True,
         max_length=settings.MAX_LENGTH_USERCHARFIELD,
+        validators=[
+            UnicodeUsernameValidator()
+        ]
     )
     first_name = models.CharField(
         verbose_name='Имя',

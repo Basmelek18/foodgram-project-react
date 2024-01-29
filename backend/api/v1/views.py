@@ -1,10 +1,11 @@
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from reportlab.pdfgen import canvas
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -19,9 +20,11 @@ from api.v1.serializers import (
     IngredientsInRecipesSerializer,
     SubscribeSerializer,
     CreateFoodgramUserSerializer,
-    RecipesMiniSerializer
+    RecipesMiniSerializer,
 )
 from recipes.models import Tags, Ingredients, Recipes, IngredientsInRecipes, Favorite, ShoppingCart
+
+from api.v1.filters import RecipeFilter, IngredientFilter
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -29,7 +32,25 @@ class UserViewSet(viewsets.ModelViewSet):
     Получение списка всех пользователей.
     """
     queryset = FoodgramUser.objects.all()
-    serializer_class = CreateFoodgramUserSerializer
+    pagination_class = LimitOffsetPagination
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return FoodgramUserSerializer
+        return CreateFoodgramUserSerializer
+
+
+    # @action(
+    #     methods=['POST'],
+    #     detail=False,
+    #     url_path='set_password',
+    #     permission_classes=(IsAuthenticated,),
+    # )
+    # def set_password(self, request):
+    #     serializer = SetPasswordSerializer(request.user, data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         methods=['GET'],
@@ -38,8 +59,8 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def get_current_user_info(self, request):
-        serializer = CreateFoodgramUserSerializer(request.user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK,)
 
     @action(
         methods=['GET'],
@@ -91,8 +112,9 @@ class TagsViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipes.objects.all()
-    serializer_class = RecipesWriteSerializer
     pagination_class = PageNumberPagination
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -169,3 +191,6 @@ class IngredientsViewSet(viewsets.ModelViewSet):
     queryset = Ingredients.objects.all()
     serializer_class = IngredientsSerializer
     pagination_class = None
+    http_method_names = ['get']
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter

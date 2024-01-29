@@ -4,7 +4,7 @@ from django.conf import settings
 import webcolors
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers
+from rest_framework import serializers, request
 from rest_framework.fields import CurrentUserDefault
 from rest_framework.validators import UniqueTogetherValidator
 
@@ -63,6 +63,30 @@ class CreateFoodgramUserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+
+# class SetPasswordSerializer(serializers.Serializer):
+#     """Сериализатор для работы с моделью user."""
+#     current_password = serializers.CharField()
+#     new_password = serializers.CharField()
+#
+#     class Meta:
+#         model = FoodgramUser
+#         fields = (
+#             'new_password',
+#             'current_password',
+#         )
+#
+#     def validate_current_password(self, value):
+#         if not self.context['request'].user.check_password(value):
+#             raise serializers.ValidationError('Неверный пароль')
+#         return value
+#
+#     def create(self, validated_data):
+#         user = self.context['request'].user
+#         user.set_password(validated_data['new_password'])
+#         user.save()
+#         return user
 
 
 class FoodgramUserSerializer(serializers.ModelSerializer):
