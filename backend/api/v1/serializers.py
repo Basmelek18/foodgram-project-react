@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from djoser.serializers import UserSerializer, UserCreateSerializer, SetPasswordSerializer
 from rest_framework import serializers, request
 from rest_framework.fields import CurrentUserDefault
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.validators import UniqueTogetherValidator
 
 from users.models import FoodgramUser, Subscriptions
