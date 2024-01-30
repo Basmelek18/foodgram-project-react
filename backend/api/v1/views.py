@@ -2,6 +2,8 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from djoser.serializers import SetPasswordSerializer
+from djoser.views import UserViewSet
 from reportlab.pdfgen import canvas
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
@@ -27,30 +29,12 @@ from recipes.models import Tags, Ingredients, Recipes, IngredientsInRecipes, Fav
 from api.v1.filters import RecipeFilter, IngredientFilter
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class FoodgramUserViewSet(UserViewSet):
     """
     Получение списка всех пользователей.
     """
     queryset = FoodgramUser.objects.all()
     pagination_class = LimitOffsetPagination
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return FoodgramUserSerializer
-        return CreateFoodgramUserSerializer
-
-
-    # @action(
-    #     methods=['POST'],
-    #     detail=False,
-    #     url_path='set_password',
-    #     permission_classes=(IsAuthenticated,),
-    # )
-    # def set_password(self, request):
-    #     serializer = SetPasswordSerializer(request.user, data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         methods=['GET'],
@@ -60,13 +44,14 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def get_current_user_info(self, request):
         serializer = self.get_serializer(request.user)
-        return Response(serializer.data, status=status.HTTP_200_OK,)
+        return Response(serializer.data, status=status.HTTP_200_OK, )
 
     @action(
         methods=['GET'],
         detail=False,
         url_path='subscriptions',
-        permission_classes=(IsAuthenticated,)
+        permission_classes=(IsAuthenticated,),
+        pagination_class=LimitOffsetPagination
     )
     def get_subscriptions(self, request):
         user = request.user
@@ -84,11 +69,11 @@ class UserViewSet(viewsets.ModelViewSet):
         url_path='subscribe',
         permission_classes=(IsAuthenticated,)
     )
-    def subscribe(self, request, pk):
+    def get_subscribe(self, request, id):
         user = request.user
-        author = get_object_or_404(FoodgramUser, id=pk)
+        author = get_object_or_404(FoodgramUser, pk=id)
         if request.method == 'POST':
-            subscription = Subscriptions.objects.create(
+            subscription, status_sub = Subscriptions.objects.get_or_create(
                 subscriber=user,
                 followed_user=author
             )
@@ -112,7 +97,7 @@ class TagsViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipes.objects.all()
-    pagination_class = PageNumberPagination
+    pagination_class = LimitOffsetPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
@@ -124,13 +109,18 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return RecipesReadSerializer
         return RecipesWriteSerializer
 
+    def get_permissions(self):
+        if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
+            self.permission_classes = (IsAuthenticated,)
+        return super().get_permissions()
+
     @action(
         methods=['POST', 'DELETE'],
         detail=True,
         url_path='favorite',
         permission_classes=(IsAuthenticated,)
     )
-    def favorite(self, request, pk):
+    def get_favorite(self, request, pk):
         recipe = get_object_or_404(Recipes, id=pk)
         if request.method == 'POST':
             Favorite.objects.create(user=request.user, recipe=recipe)
@@ -150,7 +140,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk):
         recipe = get_object_or_404(Recipes, id=pk)
         if request.method == 'POST':
-            ShoppingCart.objects.create(user=request.user, recipe=recipe)
+            ShoppingCart.objects.get_or_create(user=request.user, recipe=recipe)
             serializer = RecipesMiniSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':

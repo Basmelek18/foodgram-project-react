@@ -4,6 +4,7 @@ from django.conf import settings
 import webcolors
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
+from djoser.serializers import UserSerializer, UserCreateSerializer, SetPasswordSerializer
 from rest_framework import serializers, request
 from rest_framework.fields import CurrentUserDefault
 from rest_framework.validators import UniqueTogetherValidator
@@ -36,12 +37,8 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
-class CreateFoodgramUserSerializer(serializers.ModelSerializer):
+class CreateFoodgramUserSerializer(UserCreateSerializer):
     """Сериализатор для работы с моделью user."""
-    password = serializers.CharField(
-        write_only=True
-    )
-
     class Meta:
         model = FoodgramUser
         fields = (
@@ -53,43 +50,8 @@ class CreateFoodgramUserSerializer(serializers.ModelSerializer):
             'password'
         )
 
-    def create(self, validated_data):
-        user = FoodgramUser(
-            email=validated_data['email'],
-            username=validated_data['username'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name'],
-        )
-        user.set_password(validated_data['password'])
-        user.save()
-        return user
 
-
-# class SetPasswordSerializer(serializers.Serializer):
-#     """Сериализатор для работы с моделью user."""
-#     current_password = serializers.CharField()
-#     new_password = serializers.CharField()
-#
-#     class Meta:
-#         model = FoodgramUser
-#         fields = (
-#             'new_password',
-#             'current_password',
-#         )
-#
-#     def validate_current_password(self, value):
-#         if not self.context['request'].user.check_password(value):
-#             raise serializers.ValidationError('Неверный пароль')
-#         return value
-#
-#     def create(self, validated_data):
-#         user = self.context['request'].user
-#         user.set_password(validated_data['new_password'])
-#         user.save()
-#         return user
-
-
-class FoodgramUserSerializer(serializers.ModelSerializer):
+class FoodgramUserSerializer(UserSerializer):
     """Сериализатор для работы с моделью user."""
     is_subscribed = serializers.SerializerMethodField()
 
@@ -105,8 +67,11 @@ class FoodgramUserSerializer(serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
         return Subscriptions.objects.filter(
-            subscriber=self.context['request'].user,
+            subscriber=user,
             followed_user=obj
         ).exists()
 
@@ -204,7 +169,7 @@ class CreateIngredientSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredients.objects.all(),
     )
-    amount = serializers.IntegerField(write_only=True)
+    amount = serializers.IntegerField(write_only=True, min_value=1, required=True)
 
     class Meta:
         model = Ingredients
@@ -221,7 +186,7 @@ class RecipesWriteSerializer(serializers.ModelSerializer):
     )
     cooking_time = serializers.IntegerField(min_value=1)
     ingredients = CreateIngredientSerializer(many=True)
-    image = Base64ImageField(required=False, allow_null=True)
+    image = Base64ImageField(required=True)
 
     class Meta:
         model = Recipes
@@ -250,6 +215,22 @@ class RecipesWriteSerializer(serializers.ModelSerializer):
                 amount=amount
             )
 
+    def validate_ingredients(self, value):
+        if not value:
+            raise serializers.ValidationError('Поле ингредиенты не может быть пустым')
+        ingredients = [ingredient['id'].id for ingredient in value]
+        if len(ingredients) != len(set(ingredients)):
+            raise serializers.ValidationError('Ингредиенты должны быть уникальными')
+        return value
+
+    def validate_tags(self, value):
+        if not value:
+            raise serializers.ValidationError('Поле теги не может быть пустым')
+        tags = [tag.id for tag in value]
+        if len(tags) != len(set(tags)):
+            raise serializers.ValidationError('Теги должны быть уникальными')
+        return value
+
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
@@ -259,6 +240,12 @@ class RecipesWriteSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
+        if self.context['request'].user != instance.author:
+            raise serializers.ValidationError('Вы не можете редактировать чужие рецепты', code='invalid_permission')
+        if not validated_data.get('ingredients'):
+            raise serializers.ValidationError('Поле ингредиенты не может быть пустым')
+        if not validated_data.get('tags'):
+            raise serializers.ValidationError('Поле теги не может быть пустым')
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         super().update(instance, validated_data)
@@ -268,9 +255,10 @@ class RecipesWriteSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, instance):
-        response = super().to_representation(instance)
-        response['tags'] = TagsSerializer(instance.tags.all(), many=True).data
-        return response
+        return RecipesReadSerializer(
+            instance,
+            context={'request': self.context.get('request')}
+        ).data
 
 
 class RecipesReadSerializer(serializers.ModelSerializer):
@@ -301,14 +289,20 @@ class RecipesReadSerializer(serializers.ModelSerializer):
         return IngredientsInRecipesSerializer(IngredientsInRecipes.objects.filter(recipe=obj), many=True).data
 
     def get_is_favorited(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
         return Favorite.objects.filter(
-            user=self.context['request'].user,
+            user=user,
             recipe=obj
         ).exists()
 
     def get_is_in_shopping_cart(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
         return ShoppingCart.objects.filter(
-            user=self.context['request'].user,
+            user=user,
             recipe=obj
         ).exists()
 

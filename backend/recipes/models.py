@@ -57,7 +57,7 @@ class Recipes(models.Model):
     )
     image = models.ImageField(
         upload_to='recipes/images/',
-        null=True,
+        null=False,
         default=None
     )
     tags = models.ManyToManyField(
@@ -126,6 +126,12 @@ class ShoppingCart(models.Model):
 
     class Meta:
         verbose_name = 'Список покупок'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_shopping_cart'
+            )
+        ]
 
 
 class Favorite(models.Model):

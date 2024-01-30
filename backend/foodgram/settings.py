@@ -23,13 +23,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'users.apps.UsersConfig',
-    'api.apps.ApiConfig',
-    'recipes.apps.RecipesConfig',
     'rest_framework',
     'django_filters',
     'rest_framework.authtoken',
     'djoser',
+    'users.apps.UsersConfig',
+    'api.apps.ApiConfig',
+    'recipes.apps.RecipesConfig',
 ]
 
 MIDDLEWARE = [
@@ -104,7 +104,18 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 6,
 }
 
-
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'SERIALIZERS': {
+        'user_create': 'api.v1.serializers.CreateFoodgramUserSerializer',
+        'user': 'api.v1.serializers.FoodgramUserSerializer',
+        'current_user': 'api.v1.serializers.FoodgramUserSerializer',
+    },
+    'PERMISSIONS': {
+        'user': ['rest_framework.permissions.AllowAny'],
+        'user_list': ['rest_framework.permissions.AllowAny'],
+    }
+}
 
 LANGUAGE_CODE = 'en-us'
 

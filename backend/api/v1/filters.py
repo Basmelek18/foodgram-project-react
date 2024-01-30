@@ -9,10 +9,11 @@ class RecipeFilter(filters.FilterSet):
     is_in_shopping_cart = filters.BooleanFilter(
         method='get_is_in_shopping_cart'
     )
+    author = filters.CharFilter(field_name='author__id')
 
     class Meta:
         model = Recipes
-        fields = ['tags', 'is_favorited', 'is_in_shopping_cart']
+        fields = ['tags', 'is_favorited', 'is_in_shopping_cart', 'author']
 
     def get_is_favorited(self, queryset, name, value):
         if value and self.request.user.is_authenticated:
