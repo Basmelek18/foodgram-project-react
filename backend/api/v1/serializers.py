@@ -7,7 +7,14 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
 from users.models import FoodgramUser, Subscriptions
-from recipes.models import Tags, Ingredients, Recipes, IngredientsInRecipes, TagsRecipes, Favorite, ShoppingCart
+from recipes.models import (
+    Tags,
+    Ingredients,
+    Recipes,
+    IngredientsInRecipes,
+    Favorite,
+    ShoppingCart
+)
 
 
 class Hex2NameColor(serializers.Field):
@@ -165,7 +172,9 @@ class IngredientsInRecipesSerializer(serializers.ModelSerializer):
     """Сериализатор для работы с моделью ingredients_in_recipes."""
     id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
-    measurement_unit = serializers.ReadOnlyField(source='ingredient.measurement_unit')
+    measurement_unit = serializers.ReadOnlyField(
+        source='ingredient.measurement_unit'
+    )
 
     class Meta:
         model = IngredientsInRecipes
@@ -182,7 +191,11 @@ class CreateIngredientSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredients.objects.all(),
     )
-    amount = serializers.IntegerField(write_only=True, min_value=1, required=True)
+    amount = serializers.IntegerField(
+        write_only=True,
+        min_value=1,
+        required=True
+    )
 
     class Meta:
         model = Ingredients
@@ -231,10 +244,14 @@ class RecipesWriteSerializer(serializers.ModelSerializer):
 
     def validate_ingredients(self, value):
         if not value:
-            raise serializers.ValidationError('Поле ингредиенты не может быть пустым')
+            raise serializers.ValidationError(
+                'Поле ингредиенты не может быть пустым'
+            )
         ingredients = [ingredient['id'].id for ingredient in value]
         if len(ingredients) != len(set(ingredients)):
-            raise serializers.ValidationError('Ингредиенты должны быть уникальными')
+            raise serializers.ValidationError(
+                'Ингредиенты должны быть уникальными'
+            )
         return value
 
     def validate_tags(self, value):
@@ -260,7 +277,9 @@ class RecipesWriteSerializer(serializers.ModelSerializer):
                 code='invalid_permission'
             )
         if not validated_data.get('ingredients'):
-            raise serializers.ValidationError('Поле ингредиенты не может быть пустым')
+            raise serializers.ValidationError(
+                'Поле ингредиенты не может быть пустым'
+            )
         if not validated_data.get('tags'):
             raise serializers.ValidationError('Поле теги не может быть пустым')
         ingredients = validated_data.pop('ingredients')

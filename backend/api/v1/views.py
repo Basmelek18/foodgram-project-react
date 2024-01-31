@@ -14,15 +14,19 @@ from users.models import FoodgramUser, Subscriptions
 from api.v1.serializers import (
     TagsSerializer,
     IngredientsSerializer,
-    FoodgramUserSerializer,
     RecipesWriteSerializer,
     RecipesReadSerializer,
-    IngredientsInRecipesSerializer,
     SubscribeSerializer,
-    CreateFoodgramUserSerializer,
     RecipesMiniSerializer,
 )
-from recipes.models import Tags, Ingredients, Recipes, IngredientsInRecipes, Favorite, ShoppingCart
+from recipes.models import (
+    Tags,
+    Ingredients,
+    Recipes,
+    IngredientsInRecipes,
+    Favorite,
+    ShoppingCart
+)
 from api.v1.filters import RecipeFilter, IngredientFilter
 from api.v1.permissions import IsRecipeOwner
 
@@ -55,7 +59,11 @@ class FoodgramUserViewSet(UserViewSet):
                 subscriber=user
             )
         )
-        serializer = SubscribeSerializer(subscriptions, many=True, context={'request': request})
+        serializer = SubscribeSerializer(
+            subscriptions,
+            many=True,
+            context={'request': request}
+        )
         return self.get_paginated_response(serializer.data)
 
     @action(
@@ -76,7 +84,10 @@ class FoodgramUserViewSet(UserViewSet):
             )
             if not status_sub:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
-            serializer = SubscribeSerializer(subscription, context={'request': request})
+            serializer = SubscribeSerializer(
+                subscription,
+                context={'request': request}
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
             subscription = Subscriptions.objects.filter(
@@ -135,7 +146,11 @@ class RecipesViewSet(viewsets.ModelViewSet):
             serializer = RecipesMiniSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
-            favorite = get_object_or_404(Favorite, user=request.user, recipe=recipe)
+            favorite = get_object_or_404(
+                Favorite,
+                user=request.user,
+                recipe=recipe
+            )
             favorite.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -173,19 +188,29 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
-        ingredients = IngredientsInRecipes.objects.filter(recipe__shopping_cart__user=request.user).values(
+        ingredients = IngredientsInRecipes.objects.filter(
+            recipe__shopping_cart__user=request.user
+        ).values(
             'ingredient__name',
             'ingredient__measurement_unit'
         ).annotate(amount=Sum('amount'))
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="shopping_cart.pdf"'
+        response['Content-Disposition'] = (
+            'attachment; '
+            'filename="shopping_cart.pdf"'
+        )
 
         pdf = canvas.Canvas(response)
-        pdf.drawString(100, 800, "Shopping Cart")
+        pdf.setFont('Helvetica', 14)
+        pdf.drawString(100, 800, 'Shopping Cart')
 
         y_position = 780
         for ingredient in ingredients:
-            ingredient_line = f"{ingredient['ingredient__name']}, {ingredient['ingredient__measurement_unit']}, {ingredient['amount']}"
+            ingredient_line = (
+                f'{ingredient["ingredient__name"]},'
+                f'{ingredient["ingredient__measurement_unit"]},'
+                f'{ingredient["amount"]}'
+            )
             pdf.drawString(100, y_position, ingredient_line)
             y_position -= 20
 
