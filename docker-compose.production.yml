@@ -24,9 +24,9 @@ services:
       - data:/data
       - docs:/usr/share/nginx/html/api/docs
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: basmelek/foodgram_frontend
+    env_file: .env
+    command: cp -r /app/build/. /static/
     volumes:
       - ../frontend/:/app/result_build/
   nginx:
