@@ -1,21 +1,17 @@
 import base64
 
-from django.conf import settings
 import webcolors
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
-from djoser.serializers import UserSerializer, UserCreateSerializer, SetPasswordSerializer
-from rest_framework import serializers, request
-from rest_framework.fields import CurrentUserDefault
-from rest_framework.pagination import LimitOffsetPagination
+from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
 from users.models import FoodgramUser, Subscriptions
-
 from recipes.models import Tags, Ingredients, Recipes, IngredientsInRecipes, TagsRecipes, Favorite, ShoppingCart
 
 
 class Hex2NameColor(serializers.Field):
+    """Сериализатор для работы с цветами."""
     def to_representation(self, value):
         return value
 
@@ -28,6 +24,7 @@ class Hex2NameColor(serializers.Field):
 
 
 class Base64ImageField(serializers.ImageField):
+    """Сериализатор для работы с изображениями."""
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
@@ -38,8 +35,10 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
-class CreateFoodgramUserSerializer(UserCreateSerializer):
-    """Сериализатор для работы с моделью user."""
+class CreateFoodgramUserSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания и редактирования user."""
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = FoodgramUser
         fields = (
@@ -51,8 +50,14 @@ class CreateFoodgramUserSerializer(UserCreateSerializer):
             'password'
         )
 
+    def create(self, validated_data):
+        user = super().create(validated_data)
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
 
-class FoodgramUserSerializer(UserSerializer):
+
+class FoodgramUserSerializer(serializers.ModelSerializer):
     """Сериализатор для работы с моделью user."""
     is_subscribed = serializers.SerializerMethodField()
 
@@ -115,6 +120,9 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def get_recipes(self, obj):
         recipes = obj.followed_user.recipes.all()
+        pararms = self.context['request'].query_params
+        if 'recipes_limit' in pararms:
+            recipes = recipes[:int(pararms['recipes_limit'])]
         return RecipesMiniSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
@@ -129,6 +137,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
 
 class TagsSerializer(serializers.ModelSerializer):
+    """Сериализатор для работы с моделью tags."""
     color = Hex2NameColor()
 
     class Meta:
@@ -142,6 +151,7 @@ class TagsSerializer(serializers.ModelSerializer):
 
 
 class IngredientsSerializer(serializers.ModelSerializer):
+    """Сериализатор для работы с моделью ingredients."""
     class Meta:
         model = Ingredients
         fields = (
@@ -152,6 +162,7 @@ class IngredientsSerializer(serializers.ModelSerializer):
 
 
 class IngredientsInRecipesSerializer(serializers.ModelSerializer):
+    """Сериализатор для работы с моделью ingredients_in_recipes."""
     id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(source='ingredient.measurement_unit')
@@ -167,6 +178,7 @@ class IngredientsInRecipesSerializer(serializers.ModelSerializer):
 
 
 class CreateIngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания объектов в ingredients_in_recipes."""
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredients.objects.all(),
     )
@@ -181,6 +193,7 @@ class CreateIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipesWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания и редактирования рецептов."""
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tags.objects.all(),
         many=True,
@@ -242,7 +255,10 @@ class RecipesWriteSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         if self.context['request'].user != instance.author:
-            raise serializers.ValidationError('Вы не можете редактировать чужие рецепты', code='invalid_permission')
+            raise serializers.ValidationError(
+                'Вы не можете редактировать чужие рецепты',
+                code='invalid_permission'
+            )
         if not validated_data.get('ingredients'):
             raise serializers.ValidationError('Поле ингредиенты не может быть пустым')
         if not validated_data.get('tags'):
@@ -263,6 +279,7 @@ class RecipesWriteSerializer(serializers.ModelSerializer):
 
 
 class RecipesReadSerializer(serializers.ModelSerializer):
+    """Сериализатор для чтения рецептов."""
     tags = TagsSerializer(many=True)
     author = FoodgramUserSerializer(read_only=True)
     ingredients = serializers.SerializerMethodField()
@@ -287,7 +304,10 @@ class RecipesReadSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_ingredients(obj):
-        return IngredientsInRecipesSerializer(IngredientsInRecipes.objects.filter(recipe=obj), many=True).data
+        return IngredientsInRecipesSerializer(
+            IngredientsInRecipes.objects.filter(recipe=obj),
+            many=True
+        ).data
 
     def get_is_favorited(self, obj):
         user = self.context['request'].user
@@ -309,6 +329,7 @@ class RecipesReadSerializer(serializers.ModelSerializer):
 
 
 class RecipesMiniSerializer(RecipesReadSerializer):
+    """Сериализатор для кастомного чтения рецептов."""
     class Meta:
         model = Recipes
         fields = (

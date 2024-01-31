@@ -5,6 +5,7 @@ from users.models import FoodgramUser
 
 
 class Ingredients(models.Model):
+    """Ингридиенты."""
     name = models.CharField(
         verbose_name='Название ингридиента',
         max_length=settings.MAX_NAME_LENGTH,
@@ -15,13 +16,15 @@ class Ingredients(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Ингридиенты'
+        verbose_name_plural = 'Ингридиенты'
+        verbose_name = 'Ингридиент'
 
     def __str__(self):
         return self.name
 
 
 class Tags(models.Model):
+    """Тэги."""
     name = models.CharField(
         verbose_name='Название тэга',
         max_length=settings.MAX_NAME_LENGTH,
@@ -47,6 +50,7 @@ class Tags(models.Model):
 
 
 class Recipes(models.Model):
+    """Рецепты."""
     name = models.CharField(
         verbose_name='Название',
         max_length=settings.MAX_NAME_LENGTH,
@@ -58,21 +62,25 @@ class Recipes(models.Model):
     image = models.ImageField(
         upload_to='recipes/images/',
         null=False,
-        default=None
+        default=None,
+        verbose_name='Картинка',
     )
     tags = models.ManyToManyField(
         Tags,
         through='TagsRecipes',
         related_name='recipes',
+        verbose_name='Тэги',
     )
     ingredients = models.ManyToManyField(
         Ingredients,
         through='IngredientsInRecipes',
+        verbose_name='Ингредиенты',
     )
     author = models.ForeignKey(
         FoodgramUser,
         related_name='recipes',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Автор',
     )
     cooking_time = models.IntegerField()
 
@@ -82,50 +90,67 @@ class Recipes(models.Model):
 
 
 class TagsRecipes(models.Model):
+    """Тэги рецепта."""
     tag = models.ForeignKey(
         Tags,
         related_name='tags_recipes',
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+        verbose_name='Тэг'
+    )
     recipe = models.ForeignKey(
         Recipes,
         related_name='tags_recipes',
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт'
+    )
 
     def __str__(self):
         return f'{self.tag} {self.recipe}'
 
+    class Meta:
+        verbose_name = 'Тэг рецепта'
+        verbose_name_plural = 'Тэги рецепта'
+
 
 class IngredientsInRecipes(models.Model):
+    """Ингредиенты в рецептах."""
     ingredient = models.ForeignKey(
         Ingredients,
         on_delete=models.CASCADE,
-        related_name='ingredient_in_recipe'
+        related_name='ingredient_in_recipe',
+        verbose_name='Ингредиент'
     )
     recipe = models.ForeignKey(
         Recipes,
         on_delete=models.CASCADE,
-        related_name='ingredient_in_recipe'
+        related_name='ingredient_in_recipe',
+        verbose_name='Рецепт'
     )
     amount = models.IntegerField()
 
     class Meta:
-        verbose_name = 'ингредиенты в рецептах'
+        verbose_name = 'Ингредиент в рецептах'
+        verbose_name_plural = 'Ингредиенты в рецептах'
 
 
 class ShoppingCart(models.Model):
+    """Список покупок."""
     user = models.ForeignKey(
         FoodgramUser,
         related_name='shopping_cart',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь'
     )
     recipe = models.ForeignKey(
         Recipes,
         related_name='shopping_cart',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт'
     )
 
     class Meta:
         verbose_name = 'Список покупок'
+        verbose_name_plural = 'Список покупок'
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'recipe'],
@@ -135,14 +160,21 @@ class ShoppingCart(models.Model):
 
 
 class Favorite(models.Model):
+    """Избранное."""
     user = models.ForeignKey(
         FoodgramUser,
         related_name='favorite',
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь'
+
+    )
     recipe = models.ForeignKey(
         Recipes,
         related_name='favorite',
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт'
+    )
 
     class Meta:
         verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'

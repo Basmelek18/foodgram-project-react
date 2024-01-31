@@ -2,17 +2,15 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from djoser.serializers import SetPasswordSerializer
 from djoser.views import UserViewSet
 from reportlab.pdfgen import canvas
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from users.models import FoodgramUser, Subscriptions
-
 from api.v1.serializers import (
     TagsSerializer,
     IngredientsSerializer,
@@ -25,16 +23,12 @@ from api.v1.serializers import (
     RecipesMiniSerializer,
 )
 from recipes.models import Tags, Ingredients, Recipes, IngredientsInRecipes, Favorite, ShoppingCart
-
 from api.v1.filters import RecipeFilter, IngredientFilter
-
 from api.v1.permissions import IsRecipeOwner
 
 
 class FoodgramUserViewSet(UserViewSet):
-    """
-    Получение списка всех пользователей.
-    """
+    """Вьюсет для работы с моделью user."""
     queryset = FoodgramUser.objects.all()
     pagination_class = LimitOffsetPagination
 
@@ -61,7 +55,7 @@ class FoodgramUserViewSet(UserViewSet):
                 subscriber=user
             )
         )
-        serializer = SubscribeSerializer(subscriptions, many=True)
+        serializer = SubscribeSerializer(subscriptions, many=True, context={'request': request})
         return self.get_paginated_response(serializer.data)
 
     @action(
@@ -82,7 +76,7 @@ class FoodgramUserViewSet(UserViewSet):
             )
             if not status_sub:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
-            serializer = SubscribeSerializer(subscription)
+            serializer = SubscribeSerializer(subscription, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
             subscription = Subscriptions.objects.filter(
@@ -96,12 +90,14 @@ class FoodgramUserViewSet(UserViewSet):
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):
+    """Вьюсет для работы с моделью tags."""
     queryset = Tags.objects.all()
     serializer_class = TagsSerializer
     pagination_class = None
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
+    """Вьюсет для работы с моделью recipes."""
     queryset = Recipes.objects.all()
     pagination_class = LimitOffsetPagination
     filter_backends = (DjangoFilterBackend,)
@@ -200,6 +196,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 
 class IngredientsViewSet(viewsets.ModelViewSet):
+    """Вьюсет для работы с моделью ingredients."""
     queryset = Ingredients.objects.all()
     serializer_class = IngredientsSerializer
     pagination_class = None

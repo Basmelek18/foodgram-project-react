@@ -5,6 +5,7 @@ from django.db import models
 
 
 class FoodgramUser(AbstractUser):
+    """Модель пользователя."""
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ('first_name', 'last_name', 'username', 'password')
 
@@ -33,19 +34,28 @@ class FoodgramUser(AbstractUser):
         max_length=settings.MAX_LENGTH_USERCHARFIELD,
     )
 
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
 
 class Subscriptions(models.Model):
+    """Модель подписок."""
     subscriber = models.ForeignKey(
         FoodgramUser,
         related_name='subscriptions',
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+        verbose_name='Подписчик',
+    )
     followed_user = models.ForeignKey(
         FoodgramUser,
         related_name='followers',
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+        verbose_name='Подписка',
+    )
 
     class Meta:
-        verbose_name = 'Подписки'
+        verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
