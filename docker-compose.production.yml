@@ -17,7 +17,7 @@ services:
     restart: always
 
   backend:
-    image: ugar78/foodgram_backend
+    image: basmelek/foodgram_backend
     env_file: .env
     volumes:
       - data:/app/data/
@@ -29,7 +29,7 @@ services:
     restart: always
 
   frontend:
-    image: ugar78/foodgram_frontend
+    image: basmelek/foodgram_frontend
     build:
       context: ../frontend
       dockerfile: Dockerfile
@@ -37,7 +37,7 @@ services:
       - ../frontend/:/app/result_build/
 
   nginx:
-    image: ugar78/foodgram_gateway
+    image: basmelek/foodgram_gateway
     ports:
       - 9000:80
     volumes:
