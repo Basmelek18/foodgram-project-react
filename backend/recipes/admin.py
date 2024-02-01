@@ -82,5 +82,3 @@ class TagsRecipesAdmin(admin.ModelAdmin):
         'recipe',
     )
     search_fields = ('name',)
-
-
