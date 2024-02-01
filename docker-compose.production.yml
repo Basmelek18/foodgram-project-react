@@ -5,39 +5,47 @@ volumes:
   static:
   media:
   data:
-  docs:
+  redoc:
 
 services:
+
   db:
     image: postgres:13
     env_file: .env
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data/
+    restart: always
+
   backend:
-    image: basmelek/foodgram_backend
+    image: ugar78/foodgram_backend
     env_file: .env
+    volumes:
+      - data:/app/data/
+      - static:/app/static/
+      - media:/app/media/
+      - redoc:/app/docs/
     depends_on:
       - db
-    volumes:
-      - static:/static
-      - media:/media
-      - data:/data
-      - docs:/usr/share/nginx/html/api/docs
+    restart: always
+
   frontend:
-    image: basmelek/foodgram_frontend
-    env_file: .env
-    command: cp -r /app/build/. /static/
+    image: ugar78/foodgram_frontend
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
+
   nginx:
-    image: basmelek/foodgram_gateway
+    image: ugar78/foodgram_gateway
     ports:
       - 9000:80
     volumes:
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
-      - static:/static
-      - media:/media
+      - static:/var/html/static/
+      - media:/var/html/media/
+      - redoc:/usr/share/nginx/html/api/docs/
     depends_on:
-    - backend
-    - frontend
+      - backend
+      - frontend
