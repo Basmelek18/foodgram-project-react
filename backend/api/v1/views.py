@@ -7,7 +7,10 @@ from reportlab.pdfgen import canvas
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly
+)
 from rest_framework.response import Response
 
 from users.models import FoodgramUser, Subscriptions
@@ -17,7 +20,6 @@ from api.v1.serializers import (
     RecipesWriteSerializer,
     RecipesReadSerializer,
     SubscribeSerializer,
-    RecipesMiniSerializer,
     SubscribeWriteSerializer,
     FavoriteWriteSerializer,
     ShoppingCartWriteSerializer
@@ -26,9 +28,7 @@ from recipes.models import (
     Tags,
     Ingredients,
     Recipes,
-    IngredientsInRecipes,
-    Favorite,
-    ShoppingCart
+    IngredientsInRecipes
 )
 from api.v1.filters import RecipeFilter, IngredientFilter
 from api.v1.permissions import IsRecipeOwner, IsSubscriber
