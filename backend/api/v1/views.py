@@ -7,7 +7,7 @@ from reportlab.pdfgen import canvas
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 from users.models import FoodgramUser, Subscriptions
@@ -18,6 +18,9 @@ from api.v1.serializers import (
     RecipesReadSerializer,
     SubscribeSerializer,
     RecipesMiniSerializer,
+    SubscribeWriteSerializer,
+    FavoriteWriteSerializer,
+    ShoppingCartWriteSerializer
 )
 from recipes.models import (
     Tags,
@@ -28,7 +31,7 @@ from recipes.models import (
     ShoppingCart
 )
 from api.v1.filters import RecipeFilter, IngredientFilter
-from api.v1.permissions import IsRecipeOwner
+from api.v1.permissions import IsRecipeOwner, IsSubscriber
 
 
 class FoodgramUserViewSet(UserViewSet):
@@ -36,15 +39,10 @@ class FoodgramUserViewSet(UserViewSet):
     queryset = FoodgramUser.objects.all()
     pagination_class = LimitOffsetPagination
 
-    @action(
-        methods=['GET'],
-        detail=False,
-        url_path='me',
-        permission_classes=(IsAuthenticated,),
-    )
-    def get_current_user_info(self, request):
-        serializer = self.get_serializer(request.user)
-        return Response(serializer.data, status=status.HTTP_200_OK, )
+    def get_permissions(self):
+        if self.action == 'me':
+            return [IsAuthenticated(), ]
+        return super().get_permissions()
 
     @action(
         methods=['GET'],
@@ -70,33 +68,22 @@ class FoodgramUserViewSet(UserViewSet):
         methods=['POST', 'DELETE'],
         detail=True,
         url_path='subscribe',
-        permission_classes=(IsAuthenticated,)
+        permission_classes=(IsAuthenticated, IsSubscriber, )
     )
     def get_subscribe(self, request, id):
         user = request.user
-        author = get_object_or_404(FoodgramUser, pk=id)
-        if user == author:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        data = {'subscriber': user.id, 'followed_user': id}
+        get_object_or_404(FoodgramUser, id=id)
+        serializer = SubscribeWriteSerializer(
+            data=data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
         if request.method == 'POST':
-            subscription, status_sub = Subscriptions.objects.get_or_create(
-                subscriber=user,
-                followed_user=author
-            )
-            if not status_sub:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            serializer = SubscribeSerializer(
-                subscription,
-                context={'request': request}
-            )
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
-            subscription = Subscriptions.objects.filter(
-                subscriber=user,
-                followed_user=author
-            ).first()
-            if subscription is None:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            subscription.delete()
+            serializer.destroy()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -113,19 +100,12 @@ class RecipesViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+    permission_classes = (IsRecipeOwner, IsAuthenticatedOrReadOnly,)
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return RecipesReadSerializer
         return RecipesWriteSerializer
-
-    def get_permissions(self):
-        if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
-            self.permission_classes = (IsAuthenticated, IsRecipeOwner)
-        return super().get_permissions()
 
     @action(
         methods=['POST', 'DELETE'],
@@ -134,24 +114,19 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def get_favorite(self, request, pk):
-        recipe = Recipes.objects.filter(id=pk).first()
-        if recipe is None:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        data = {'user': request.user.id, 'recipe': pk}
+        serializer = FavoriteWriteSerializer(
+            data=data,
+            context={'request': request}
+        )
         if request.method == 'POST':
-            favorite, status_favorite = Favorite.objects.get_or_create(
-                user=request.user, recipe=recipe
-            )
-            if not status_favorite:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            serializer = RecipesMiniSerializer(recipe)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
-            favorite = get_object_or_404(
-                Favorite,
-                user=request.user,
-                recipe=recipe
-            )
-            favorite.delete()
+            get_object_or_404(Recipes, id=pk)
+            serializer.is_valid(raise_exception=True)
+            serializer.destroy()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -161,24 +136,19 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def shopping_cart(self, request, pk):
-        recipe = Recipes.objects.filter(id=pk).first()
-        if recipe is None:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        data = {'user': request.user.id, 'recipe': pk}
+        serializer = ShoppingCartWriteSerializer(
+            data=data,
+            context={'request': request}
+        )
         if request.method == 'POST':
-            shopping_cart, status_cart = ShoppingCart.objects.get_or_create(
-                user=request.user, recipe=recipe
-            )
-            if not status_cart:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            serializer = RecipesMiniSerializer(recipe)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
-            shopping_cart = ShoppingCart.objects.filter(
-                user=request.user, recipe=recipe
-            ).first()
-            if shopping_cart is None:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            shopping_cart.delete()
+            get_object_or_404(Recipes, id=pk)
+            serializer.is_valid(raise_exception=True)
+            serializer.destroy()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(

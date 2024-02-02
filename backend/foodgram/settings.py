@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'api.apps.ApiConfig',
     'recipes.apps.RecipesConfig',
+    'colorfield',
 ]
 
 MIDDLEWARE = [
@@ -106,7 +107,6 @@ REST_FRAMEWORK = {
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'SERIALIZERS': {
-        'user_create': 'api.v1.serializers.CreateFoodgramUserSerializer',
         'user': 'api.v1.serializers.FoodgramUserSerializer',
         'current_user': 'api.v1.serializers.FoodgramUserSerializer',
     },
@@ -135,9 +135,3 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.FoodgramUser'
-
-MAX_LENGTH_USERCHARFIELD = 150
-
-MAX_NAME_LENGTH = 200
-
-COLOR_LENGTH = 7

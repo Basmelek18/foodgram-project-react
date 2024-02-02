@@ -12,7 +12,7 @@ from .models import (
 
 
 @admin.register(Tags)
-class CategoryAdmin(admin.ModelAdmin):
+class TagsAdmin(admin.ModelAdmin):
     list_display = (
         'pk',
         'name',
@@ -33,14 +33,12 @@ class IngredientsAdmin(admin.ModelAdmin):
     filter_fields = ('name',)
 
 
-@admin.register(IngredientsInRecipes)
-class IngredientsInRecipesAdmin(admin.ModelAdmin):
-    list_display = (
-        'pk',
-        'ingredient',
-        'recipe',
-    )
-    search_fields = ('name',)
+class TagsRecipesInline(admin.TabularInline):
+    model = TagsRecipes
+
+
+class IngredientsInRecipesInline(admin.TabularInline):
+    model = IngredientsInRecipes
 
 
 @admin.register(ShoppingCart)
@@ -55,10 +53,17 @@ class ShoppingCartAdmin(admin.ModelAdmin):
 
 @admin.register(Recipes)
 class RecipesAdmin(admin.ModelAdmin):
+    inlines = [
+        IngredientsInRecipesInline,
+        TagsRecipesInline
+    ]
     list_display = (
         'pk',
         'name',
         'author',
+        'image',
+        'text',
+        'cooking_time',
     )
     search_fields = ('name',)
     filter_fields = ('author', 'name', 'tags')
@@ -79,6 +84,16 @@ class TagsRecipesAdmin(admin.ModelAdmin):
     list_display = (
         'pk',
         'tag',
+        'recipe',
+    )
+    search_fields = ('name',)
+
+
+@admin.register(IngredientsInRecipes)
+class IngredientsInRecipesAdmin(admin.ModelAdmin):
+    list_display = (
+        'pk',
+        'ingredient',
         'recipe',
     )
     search_fields = ('name',)
