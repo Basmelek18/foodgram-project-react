@@ -35,10 +35,12 @@ class IngredientsAdmin(admin.ModelAdmin):
 
 class TagsRecipesInline(admin.TabularInline):
     model = TagsRecipes
+    min_num = 1
 
 
 class IngredientsInRecipesInline(admin.TabularInline):
     model = IngredientsInRecipes
+    min_num = 1
 
 
 @admin.register(ShoppingCart)
@@ -60,13 +62,13 @@ class RecipesAdmin(admin.ModelAdmin):
     list_display = (
         'pk',
         'name',
-        'author',
         'image',
         'text',
         'cooking_time',
+        'author',
     )
     search_fields = ('name',)
-    filter_fields = ('author', 'name', 'tags')
+    filter_fields = ('name', 'tags')
 
 
 @admin.register(Favorite)
