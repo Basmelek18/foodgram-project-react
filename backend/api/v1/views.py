@@ -3,10 +3,11 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly
@@ -37,7 +38,6 @@ from api.v1.permissions import IsRecipeOwner
 class FoodgramUserViewSet(UserViewSet):
     """Вьюсет для работы с моделью user."""
     queryset = FoodgramUser.objects.all()
-    pagination_class = LimitOffsetPagination
 
     def get_permissions(self):
         if self.action == 'me':
@@ -102,7 +102,6 @@ class TagsViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipesViewSet(viewsets.ModelViewSet):
     """Вьюсет для работы с моделью recipes."""
     queryset = Recipes.objects.all()
-    pagination_class = LimitOffsetPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = (IsRecipeOwner, IsAuthenticatedOrReadOnly,)
@@ -163,6 +162,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
+
+        pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
+        pdfmetrics.registerFont(TTFont('Arial-Bold', 'arialbd.ttf'))
+
         ingredients = IngredientsInRecipes.objects.filter(
             recipe__shopping_cart__user=request.user
         ).values(
@@ -176,15 +179,15 @@ class RecipesViewSet(viewsets.ModelViewSet):
         )
 
         pdf = canvas.Canvas(response)
-        pdf.setFont('Helvetica', 14)
+        pdf.setFont('Arial', 14)
         pdf.drawString(100, 800, 'Shopping Cart')
 
         y_position = 780
         for ingredient in ingredients:
             ingredient_line = (
-                f'{ingredient["ingredient__name"]},'
-                f'{ingredient["ingredient__measurement_unit"]},'
-                f'{ingredient["amount"]}'
+                f'{ingredient["ingredient__name"]} - '
+                f'{ingredient["amount"]} '
+                f'{ingredient["ingredient__measurement_unit"]}'
             )
             pdf.drawString(100, y_position, ingredient_line)
             y_position -= 20
