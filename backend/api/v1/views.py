@@ -34,6 +34,8 @@ from recipes.models import (
 from api.v1.filters import RecipeFilter, IngredientFilter
 from api.v1.permissions import IsRecipeOwner
 
+pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
+
 
 class FoodgramUserViewSet(UserViewSet):
     """Вьюсет для работы с моделью user."""
@@ -162,9 +164,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
-
-        pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
-        pdfmetrics.registerFont(TTFont('Arial-Bold', 'arialbd.ttf'))
 
         ingredients = IngredientsInRecipes.objects.filter(
             recipe__shopping_cart__user=request.user
