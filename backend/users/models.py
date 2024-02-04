@@ -38,7 +38,7 @@ class FoodgramUser(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ('id',)
+        ordering = ('email', 'username', 'first_name', 'last_name')
 
     def __str__(self):
         return self.username
@@ -68,7 +68,7 @@ class Subscriptions(models.Model):
                 name='unique_subscriptions'
             )
         ]
-        ordering = ('id',)
+        ordering = ('subscriber', 'followed_user')
 
     def __str__(self):
         return f'{self.subscriber} {self.followed_user}'

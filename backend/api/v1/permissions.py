@@ -11,12 +11,3 @@ class IsRecipeOwner(permissions.BasePermission):
             request.method in permissions.SAFE_METHODS
             or obj.author == request.user
         )
-
-
-class IsSubscriber(permissions.BasePermission):
-    """
-    Пользователь не может подписаться на самого себя.
-    """
-
-    def has_object_permission(self, request, view, obj):
-        return obj.user != request.user

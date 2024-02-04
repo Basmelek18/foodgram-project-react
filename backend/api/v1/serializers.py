@@ -1,7 +1,5 @@
-import webcolors
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
 from users.models import FoodgramUser, Subscriptions
 from recipes.models import (
@@ -13,19 +11,6 @@ from recipes.models import (
     ShoppingCart
 )
 from foodgram import constants
-
-
-class Hex2NameColor(serializers.Field):
-    """Сериализатор для работы с цветами."""
-    def to_representation(self, value):
-        return value
-
-    def to_internal_value(self, data):
-        try:
-            data = webcolors.hex_to_name(data)
-        except ValueError:
-            raise serializers.ValidationError('Для этого цвета нет имени')
-        return data
 
 
 class FoodgramUserSerializer(serializers.ModelSerializer):
@@ -82,9 +67,6 @@ class SubscribeWriteSerializer(serializers.ModelSerializer):
                 )
         return data
 
-    def create(self, validated_data):
-        return Subscriptions.objects.create(**validated_data)
-
     def destroy(self):
         return Subscriptions.objects.filter(
             subscriber=self.validated_data.get('subscriber'),
@@ -93,73 +75,35 @@ class SubscribeWriteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return SubscribeSerializer(
-            instance,
+            instance.followed_user,
             context={'request': self.context.get('request')}
         ).data
 
 
-class SubscribeSerializer(serializers.ModelSerializer):
+class SubscribeSerializer(FoodgramUserSerializer):
     """Сериализатор для работы с моделью подписок."""
-    id = serializers.ReadOnlyField(source='followed_user.id')
-    username = serializers.ReadOnlyField(source='followed_user.username')
-    email = serializers.ReadOnlyField(source='followed_user.email')
-    first_name = serializers.ReadOnlyField(source='followed_user.first_name')
-    last_name = serializers.ReadOnlyField(source='followed_user.last_name')
-    is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
-    class Meta:
-        model = Subscriptions
-        fields = (
-            'id',
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'is_subscribed',
+    class Meta(FoodgramUserSerializer.Meta):
+        model = FoodgramUser
+        fields = FoodgramUserSerializer.Meta.fields + (
             'recipes',
             'recipes_count'
         )
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Subscriptions.objects.all(),
-                fields=['subscriber', 'followed_user']
-            )
-        ]
-
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        return bool(
-            request
-            and request.user.is_authenticated
-            and Subscriptions.objects.filter(
-                subscriber=request.user,
-                followed_user=obj.followed_user
-            ).exists()
-        )
 
     def get_recipes(self, obj):
-        recipes = obj.followed_user.recipes.all()
+        recipes = obj.recipes.all()
         pararms = self.context['request'].query_params
         if 'recipes_limit' in pararms:
             try:
                 recipes = recipes[:int(pararms['recipes_limit'])]
             except ValueError:
-                raise serializers.ValidationError(
-                    'Параметр recipes_limit должен быть числом.'
-                )
+                pass
         return RecipesMiniSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
-        return obj.followed_user.recipes.count()
-
-    def validate_following(self, value):
-        if self.context['request'].user == value:
-            raise serializers.ValidationError(
-                "Вы не можете подписаться на самого себя."
-            )
-        return value
+        return obj.recipes.count()
 
 
 class TagsSerializer(serializers.ModelSerializer):
@@ -399,9 +343,6 @@ class FavoriteWriteSerializer(serializers.ModelSerializer):
                 )
         return data
 
-    def create(self, validated_data):
-        return Favorite.objects.create(**validated_data)
-
     def destroy(self):
         return Favorite.objects.filter(
             user=self.validated_data['user'].id,
@@ -437,9 +378,6 @@ class ShoppingCartWriteSerializer(serializers.ModelSerializer):
                     'Рецепта нет в корзине.'
                 )
         return data
-
-    def create(self, validated_data):
-        return ShoppingCart.objects.create(**validated_data)
 
     def destroy(self):
         return ShoppingCart.objects.filter(

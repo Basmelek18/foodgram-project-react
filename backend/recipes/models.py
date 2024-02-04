@@ -64,9 +64,8 @@ class Recipes(models.Model):
         verbose_name='Название',
         max_length=constants.MAX_NAME_LENGTH,
     )
-    text = models.CharField(
+    text = models.TextField(
         verbose_name='Описание',
-        max_length=constants.MAX_TEXT_LENGTH,
     )
     image = models.ImageField(
         upload_to='recipes/images/',
@@ -114,7 +113,7 @@ class Recipes(models.Model):
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
-        ordering = ('id',)
+        ordering = ('name', 'author',)
 
     def __str__(self):
         return self.name
@@ -138,7 +137,7 @@ class TagsRecipes(models.Model):
     class Meta:
         verbose_name = 'Тэг рецепта'
         verbose_name_plural = 'Тэги рецепта'
-        ordering = ('id',)
+        ordering = ('tag', 'recipe',)
 
     def __str__(self):
         return f'{self.tag} {self.recipe}'
@@ -181,7 +180,7 @@ class IngredientsInRecipes(models.Model):
     class Meta:
         verbose_name = 'Ингредиент в рецептах'
         verbose_name_plural = 'Ингредиенты в рецептах'
-        ordering = ('id',)
+        ordering = ('ingredient', 'recipe',)
 
     def __str__(self):
         return f'{self.ingredient} {self.recipe}'
@@ -218,7 +217,7 @@ class ShoppingCart(BaseForFavoriteAndShoppingCart):
                 name='unique_shopping_cart'
             )
         ]
-        ordering = ('id',)
+        ordering = ('user', 'recipe')
         default_related_name = 'shopping_cart'
 
 
@@ -233,5 +232,5 @@ class Favorite(BaseForFavoriteAndShoppingCart):
                 name='unique_favorite'
             )
         ]
-        ordering = ('id',)
+        ordering = ('user', 'recipe')
         default_related_name = 'favorite'

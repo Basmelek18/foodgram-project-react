@@ -31,7 +31,7 @@ from recipes.models import (
     IngredientsInRecipes
 )
 from api.v1.filters import RecipeFilter, IngredientFilter
-from api.v1.permissions import IsRecipeOwner, IsSubscriber
+from api.v1.permissions import IsRecipeOwner
 
 
 class FoodgramUserViewSet(UserViewSet):
@@ -52,10 +52,13 @@ class FoodgramUserViewSet(UserViewSet):
     )
     def get_subscriptions(self, request):
         user = request.user
-        subscriptions = self.paginate_queryset(
-            Subscriptions.objects.filter(
+        queryset = FoodgramUser.objects.filter(
+            followers__in=Subscriptions.objects.select_related('followed_user').filter(
                 subscriber=user
             )
+        )
+        subscriptions = self.paginate_queryset(
+            queryset
         )
         serializer = SubscribeSerializer(
             subscriptions,
@@ -68,7 +71,7 @@ class FoodgramUserViewSet(UserViewSet):
         methods=['POST', 'DELETE'],
         detail=True,
         url_path='subscribe',
-        permission_classes=(IsAuthenticated, IsSubscriber, )
+        permission_classes=(IsAuthenticated, )
     )
     def get_subscribe(self, request, id):
         user = request.user
