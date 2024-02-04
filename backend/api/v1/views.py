@@ -53,7 +53,9 @@ class FoodgramUserViewSet(UserViewSet):
     def get_subscriptions(self, request):
         user = request.user
         queryset = FoodgramUser.objects.filter(
-            followers__in=Subscriptions.objects.select_related('followed_user').filter(
+            followers__in=Subscriptions.objects.select_related(
+                'followed_user'
+            ).filter(
                 subscriber=user
             )
         )
