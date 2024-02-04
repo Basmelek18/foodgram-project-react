@@ -1,3 +1,4 @@
+import requests
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -33,6 +34,12 @@ from recipes.models import (
 )
 from api.v1.filters import RecipeFilter, IngredientFilter
 from api.v1.permissions import IsRecipeOwner
+
+url = 'https://github.com/google/fonts/blob/main/apache/arial/Arial.ttf?raw=true'
+response = requests.get(url)
+
+with open('arial.ttf', 'wb') as f:
+    f.write(response.content)
 
 pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
 
