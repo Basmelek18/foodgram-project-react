@@ -35,14 +35,6 @@ from recipes.models import (
 from api.v1.filters import RecipeFilter, IngredientFilter
 from api.v1.permissions import IsRecipeOwner
 
-url = 'https://github.com/google/fonts/blob/main/apache/arial/Arial.ttf?raw=true'
-response = requests.get(url)
-
-with open('arial.ttf', 'wb') as f:
-    f.write(response.content)
-
-pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
-
 
 class FoodgramUserViewSet(UserViewSet):
     """Вьюсет для работы с моделью user."""
@@ -184,8 +176,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
             'filename="shopping_cart.pdf"'
         )
 
+        pdfmetrics.registerFont(TTFont('Roboto', 'RobotoMono[wght].ttf'))
+
         pdf = canvas.Canvas(response)
-        pdf.setFont('Arial', 14)
+        pdf.setFont('Roboto', 14)
         pdf.drawString(100, 800, 'Shopping Cart')
 
         y_position = 780
