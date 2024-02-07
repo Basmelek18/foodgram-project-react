@@ -55,7 +55,7 @@ const SingleCard = ({ loadItem, updateOrders }) => {
     <Container>
       <MetaTags>
         <title>{name}</title>
-        <meta name="description" content={`Продуктовый помощник - ${name}`} />
+        <meta name="description" content={`Grocery assistant - ${name}`} />
         <meta property="og:title" content={name} />
       </MetaTags>
       <div className={styles['single-card']}>
@@ -85,7 +85,7 @@ const SingleCard = ({ loadItem, updateOrders }) => {
               </div>
               {(userContext || {}).id === author.id && <LinkComponent
                 href={`${url}/edit`}
-                title='Редактировать рецепт'
+                title='Edit recipe'
                 className={styles['single-card__edit']}
               />}
             </p>
@@ -108,7 +108,7 @@ const SingleCard = ({ loadItem, updateOrders }) => {
                 handleSubscribe({ author_id: author.id, toSubscribe: !author.is_subscribed })
               }}
             >
-              {author.is_subscribed ? 'Отписаться от автора' : 'Подписаться на автора'}
+              {author.is_subscribed ? 'Unsubscribe' : 'Subscribe'}
             </Button>}
           </div>
           <Ingredients ingredients={ingredients} />

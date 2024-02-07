@@ -1,28 +1,25 @@
 # FoodGram
 
-[Ссылка](https://basmelek.ddns.net/)
-
-# Описание:
-FoodGram - сайт, на котором пользователи будут публиковать рецепты, добавлять чужие 
-рецепты в избранное и подписываться на публикации других авторов. Пользователям сайта 
-также будет доступен сервис «Список покупок». Он позволит создавать список продуктов, 
-которые нужно купить для приготовления выбранных блюд.
+# Description:
+FoodGram - A site where users can publish recipes, add other people's recipes to their favorites, and subscribe to other
+authors. Users of the site will also have access to the "Shopping List" service.
+It will allow to create a list of products, that need to be purchased for the preparation of selected dishes.
 
 
-# Инструкция как развернуть в докере
+# Instructions on how to deploy in Docker
 
-Открыть директорию в терминале foodgram-project-react\infra
+In directory foodgram-project-react\infra
 ```
 docker compose up
 ```
-После создания контейнеров в другом окне терминала foodgram-project-react\infra
+After creating containers in another terminal window foodgram-project-react\infra
 ```
 docker compose exec backend python manage.py collectstatic
 docker compose exec backend python manage.py migrate
 ```
 
 
-# Стек технологий использованных в проекте:
+# Stack of technologies used in the project:
 
 - Python 3.9
 - Django 3.2
@@ -32,24 +29,24 @@ docker compose exec backend python manage.py migrate
 - Postgres 
 - Nginx
 
-# Как наполнить БД данными:
+# How to fill the database with data:
 
-Открыть директорию в терминале foodgram-project-react\infra
+Open the directory in the terminal foodgram-project-react\infra
 ```
-docker cp ../data/ingredients.csv <Имя бэкенд контейнера>:/data/
+docker cp ../data/ingredients.csv <backend container name>:/data/
 docker compose exec backend python manage.py import_csv
 docker compose exec backend python manage.py createsuperuser
 cp ../docs/ <Имя nginx контейнера>:/usr/share/nginx/html/api/
 
 ```
 
-# Примеры работы с API для всех пользователей
+# Examples of working with API for all users
 
-### Документация к API
+### API documentation
 
-Документация находиться по адресу `http://localhost:9000/api/docs/`
+The documentation can be found at `http://localhost:9000/api/docs/`
 
 
-# Автор:
+# Author:
 
-- [Вячеслав Испанюк](https://github.com/Basmelek18)
+- [Ispaniuk Viacheslav](https://github.com/Basmelek18)

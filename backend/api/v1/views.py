@@ -36,7 +36,7 @@ from api.v1.permissions import IsRecipeOwner
 
 
 class FoodgramUserViewSet(UserViewSet):
-    """Вьюсет для работы с моделью user."""
+    """Viewset for user."""
     queryset = FoodgramUser.objects.all()
 
     def get_permissions(self):
@@ -93,14 +93,14 @@ class FoodgramUserViewSet(UserViewSet):
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):
-    """Вьюсет для работы с моделью tags."""
+    """Viewset for tags."""
     queryset = Tags.objects.all()
     serializer_class = TagsSerializer
     pagination_class = None
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
-    """Вьюсет для работы с моделью recipes."""
+    """Viewset for recipes."""
     queryset = Recipes.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
@@ -198,7 +198,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 
 class IngredientsViewSet(viewsets.ModelViewSet):
-    """Вьюсет для работы с моделью ingredients."""
+    """Viewset for ingredients."""
     queryset = Ingredients.objects.all()
     serializer_class = IngredientsSerializer
     pagination_class = None

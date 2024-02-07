@@ -14,7 +14,7 @@ from foodgram import constants
 
 
 class FoodgramUserSerializer(serializers.ModelSerializer):
-    """Сериализатор для работы с моделью user."""
+    """Serializer for user."""
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -41,7 +41,7 @@ class FoodgramUserSerializer(serializers.ModelSerializer):
 
 
 class SubscribeWriteSerializer(serializers.ModelSerializer):
-    """Сериализатор для создания подписок."""
+    """Serializer for creating subscriptions."""
     class Meta:
         model = Subscriptions
         fields = ('subscriber', 'followed_user')
@@ -49,7 +49,7 @@ class SubscribeWriteSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data['subscriber'] == data['followed_user']:
             raise serializers.ValidationError(
-                'Нельзя подписаться на самого себя'
+                'You cannot subscribe to yourself'
             )
         subscription = Subscriptions.objects.filter(
             subscriber=data['subscriber'],
@@ -58,12 +58,12 @@ class SubscribeWriteSerializer(serializers.ModelSerializer):
         if self.context.get('request').method == 'POST':
             if subscription:
                 raise serializers.ValidationError(
-                    'Вы уже подписаны на этого пользователя'
+                    'You have already subscribed to this user'
                 )
         if self.context.get('request').method == 'DELETE':
             if not subscription:
                 raise serializers.ValidationError(
-                    'Вы не подписаны на этого пользователя'
+                    'You have not subscribed to this user'
                 )
         return data
 
@@ -81,7 +81,7 @@ class SubscribeWriteSerializer(serializers.ModelSerializer):
 
 
 class SubscribeSerializer(FoodgramUserSerializer):
-    """Сериализатор для работы с моделью подписок."""
+    """Serializer for subscriptions."""
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
@@ -107,7 +107,7 @@ class SubscribeSerializer(FoodgramUserSerializer):
 
 
 class TagsSerializer(serializers.ModelSerializer):
-    """Сериализатор для работы с моделью tags."""
+    """Serializer for tags."""
     class Meta:
         model = Tags
         fields = (
@@ -119,7 +119,7 @@ class TagsSerializer(serializers.ModelSerializer):
 
 
 class IngredientsSerializer(serializers.ModelSerializer):
-    """Сериализатор для работы с моделью ingredients."""
+    """Serializer for ingredients."""
     class Meta:
         model = Ingredients
         fields = (
@@ -130,7 +130,7 @@ class IngredientsSerializer(serializers.ModelSerializer):
 
 
 class IngredientsInRecipesSerializer(serializers.ModelSerializer):
-    """Сериализатор для работы с моделью ingredients_in_recipes."""
+    """Serializer for ingredients in recipes."""
     id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
@@ -148,7 +148,7 @@ class IngredientsInRecipesSerializer(serializers.ModelSerializer):
 
 
 class CreateIngredientSerializer(serializers.ModelSerializer):
-    """Сериализатор для создания объектов в ingredients."""
+    """Serializer for creating ingredients in recipes."""
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredients.objects.all(),
     )
@@ -168,7 +168,7 @@ class CreateIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipesWriteSerializer(serializers.ModelSerializer):
-    """Сериализатор для создания и редактирования рецептов."""
+    """Serializer for creating and editing recipes."""
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tags.objects.all(),
         many=True,
@@ -207,24 +207,26 @@ class RecipesWriteSerializer(serializers.ModelSerializer):
         image = self.initial_data.get('image')
         if not ingredients:
             raise serializers.ValidationError(
-                'Поле ингредиенты не может быть пустым'
+                'Ingredients cannot be empty'
             )
         if not tags:
             raise serializers.ValidationError(
-                'Поле теги не может быть пустым'
+                'Tags cannot be empty'
             )
         if not image:
             raise serializers.ValidationError(
-                'Поле изображение не может быть пустым'
+                'Image cannot be empty'
             )
         ingredients_count = [ingredient['id'] for ingredient in ingredients]
         if len(ingredients_count) != len(set(ingredients_count)):
             raise serializers.ValidationError(
-                'Ингредиенты должны быть уникальными'
+                'Ingredients must be unique'
             )
         tags_count = [tag for tag in tags]
         if len(tags_count) != len(set(tags_count)):
-            raise serializers.ValidationError('Теги должны быть уникальными')
+            raise serializers.ValidationError(
+                'Tags must be unique'
+            )
         return data
 
     def create(self, validated_data):
@@ -255,7 +257,7 @@ class RecipesWriteSerializer(serializers.ModelSerializer):
 
 
 class RecipesReadSerializer(serializers.ModelSerializer):
-    """Сериализатор для чтения рецептов."""
+    """Serializer for reading recipes."""
     tags = TagsSerializer(many=True)
     author = FoodgramUserSerializer(read_only=True)
     ingredients = serializers.SerializerMethodField()
@@ -309,7 +311,7 @@ class RecipesReadSerializer(serializers.ModelSerializer):
 
 
 class RecipesMiniSerializer(RecipesReadSerializer):
-    """Сериализатор для кастомного чтения рецептов."""
+    """Serializer for custom recipes list."""
     class Meta:
         model = Recipes
         fields = (
@@ -321,7 +323,7 @@ class RecipesMiniSerializer(RecipesReadSerializer):
 
 
 class FavoriteWriteSerializer(serializers.ModelSerializer):
-    """Сериализатор для работы с моделью favorite."""
+    """Serializer for favorite."""
     class Meta:
         model = Favorite
         fields = ('user', 'recipe')
@@ -334,12 +336,12 @@ class FavoriteWriteSerializer(serializers.ModelSerializer):
         if self.context.get('request').method == 'POST':
             if favorite.exists():
                 raise serializers.ValidationError(
-                    'Рецепт уже добавлен в избранное.'
+                    'Recipe already added to favorites.'
                 )
         if self.context.get('request').method == 'DELETE':
             if not favorite.exists():
                 raise serializers.ValidationError(
-                    'Рецепта нет в избранном.'
+                    'Recipe not added to favorites.'
                 )
         return data
 
@@ -357,7 +359,7 @@ class FavoriteWriteSerializer(serializers.ModelSerializer):
 
 
 class ShoppingCartWriteSerializer(serializers.ModelSerializer):
-    """Сериализатор для работы с моделью shopping_cart."""
+    """Serializer for shopping_cart."""
     class Meta:
         model = ShoppingCart
         fields = ('user', 'recipe')
@@ -370,12 +372,12 @@ class ShoppingCartWriteSerializer(serializers.ModelSerializer):
         if self.context.get('request').method == 'POST':
             if shopping_cart.exists():
                 raise serializers.ValidationError(
-                    'Рецепт уже добавлен в корзину.'
+                    'Recipe already added to shopping cart.'
                 )
         if self.context.get('request').method == 'DELETE':
             if not shopping_cart.exists():
                 raise serializers.ValidationError(
-                    'Рецепта нет в корзине.'
+                    'Recipe not added to shopping cart.'
                 )
         return data
 
