@@ -5,18 +5,19 @@ FoodGram is a platform that empowers users to share their culinary creations, en
 
 FoodGram is a culinary haven where users can unleash their creativity by sharing their favorite recipes with the community. The platform encourages users not only to showcase their culinary masterpieces but also to explore and appreciate the gastronomic delights crafted by fellow enthusiasts.
 
-Key Features:
+##Key Features:
 
-Recipe Publication:
+###Recipe Publication:
 
-Users have the opportunity to publish their own unique recipes, adding a personal touch to the diverse collection on FoodGram.
+-Users have the opportunity to publish their own unique recipes, adding a personal touch to the diverse collection on FoodGram.
 Favorites Repository:
 
-Enabling a sense of culinary camaraderie, users can curate their own collection by adding recipes from other contributors to their favorites.
+-Enabling a sense of culinary camaraderie, users can curate their own collection by adding recipes from other contributors to their favorites.
 Author Subscriptions:
 
-To stay connected and inspired, users can subscribe to their favorite authors, ensuring they never miss out on new and exciting culinary adventures.
-Shopping List Service:
+-To stay connected and inspired, users can subscribe to their favorite authors, ensuring they never miss out on new and exciting culinary adventures.
+
+###Shopping List Service:
 
 FoodGram extends its functionality with a convenient "Shopping List" service. Users can compile lists of ingredients required for specific dishes, streamlining the preparation process.
 Whether you're a seasoned chef or a passionate home cook, FoodGram offers a dynamic space to share, savor, and connect through the joy of cooking. Join our community and embark on a flavorful journey where each recipe tells a unique story, and every user contributes to the rich tapestry of culinary experiences. Happy cooking!
