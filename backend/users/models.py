@@ -6,16 +6,16 @@ from foodgram import constants
 
 
 class FoodgramUser(AbstractUser):
-    """Модель пользователя."""
+    """Custom user model."""
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ('first_name', 'last_name', 'username', 'password')
 
     email = models.EmailField(
-        verbose_name='Электронная почта',
+        verbose_name='Email',
         unique=True,
     )
     username = models.CharField(
-        verbose_name='Имя пользователя',
+        verbose_name='Username',
         unique=True,
         max_length=constants.MAX_LENGTH_USERCHARFIELD,
         validators=[
@@ -23,21 +23,21 @@ class FoodgramUser(AbstractUser):
         ]
     )
     first_name = models.CharField(
-        verbose_name='Имя',
+        verbose_name='First name',
         max_length=constants.MAX_LENGTH_USERCHARFIELD,
     )
     last_name = models.CharField(
-        verbose_name='Фамилия',
+        verbose_name='Last name',
         max_length=constants.MAX_LENGTH_USERCHARFIELD,
     )
     password = models.CharField(
-        verbose_name='Пароль',
+        verbose_name='Password',
         max_length=constants.MAX_LENGTH_USERCHARFIELD,
     )
 
     class Meta:
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
+        verbose_name = 'User'
+        verbose_name_plural = 'Users'
         ordering = ('email', 'username', 'first_name', 'last_name')
 
     def __str__(self):
@@ -45,23 +45,23 @@ class FoodgramUser(AbstractUser):
 
 
 class Subscriptions(models.Model):
-    """Модель подписок."""
+    """Subscriptions."""
     subscriber = models.ForeignKey(
         FoodgramUser,
         related_name='subscriptions',
         on_delete=models.CASCADE,
-        verbose_name='Подписчик',
+        verbose_name='Subscriber',
     )
     followed_user = models.ForeignKey(
         FoodgramUser,
         related_name='followers',
         on_delete=models.CASCADE,
-        verbose_name='Подписка',
+        verbose_name='Followed user',
     )
 
     class Meta:
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
+        verbose_name = 'Subscription'
+        verbose_name_plural = 'Subscriptions'
         constraints = [
             models.UniqueConstraint(
                 fields=['subscriber', 'followed_user'],
